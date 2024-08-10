@@ -25,6 +25,13 @@ y1 = -L1*smp.cos(theta1)
 x2 = L1*smp.sin(theta1)+L2*smp.sin(theta2)
 y2 = -L1*smp.cos(theta1)-L2*smp.cos(theta2)
 
+
+x1_f = smp.lambdify((theta1, L1), x1)
+y1_f = smp.lambdify((theta1, L1), y1)
+x2_f = smp.lambdify((theta1, theta2, L1, L2), x2)
+y2_f = smp.lambdify((theta1, theta2, L1, L2), y2)
+
+
 #Kinetic energy
 K1 = 1/2 * m1 * (smp.diff(x1, t)**2 + smp.diff(y1, t)**2)
 K2 = 1/2 * m2 * (smp.diff(x2, t)**2 + smp.diff(y2, t)**2)
@@ -59,7 +66,7 @@ def dSdt(S, t, g, m1, m2, L1, L2):
 
 #obtaining time values for time series and setting constants
 t = np.linspace(0, 40, 1001)
-g, m1, m2, L1, L2 = 9.81, 2, 1, 2, 1
+g, m1, m2, L1, L2 = 9.81, 1, 1, 2, 2
 
 
 #numerically solving system and putting setting ans to list of points
@@ -71,13 +78,30 @@ theta1 = ans.T[0]
 theta2 = ans.T[2]
 
 
-#mass1 = vpython.sphere(color = 'red', radius = 0.3, make_trail = True)
-#mass2 = vpython.sphere(color = 'green', radius = 0.3, make_trail = True)
+mass1 = vpython.sphere(color = vpython.color.red, radius = 0.3, make_trail = True)
+mass2 = vpython.sphere(color = vpython.color.green, radius = 0.3, make_trail = True)
 
-#rod1 = vpython.cylinder(pos = vector(0,0,0), axis = )
-plt.plot(t, theta1)
-plt.plot(t, theta2)
-plt.show()
+rod1 = vpython.cylinder(pos = vpython.vector(0,0,0), axis = vpython.vector(0,0,0), radius = 0.05)
+rod2 = vpython.cylinder(pos = vpython.vector(0,0,0), axis = vpython.vector(0,0,0), radius = 0.05)
+
+
+def getx1y1x2y2(t, theta1, theta2, L1, L2):
+    return (x1_f(theta1, L1), y1_f(theta1, L1), x2_f(theta1, theta2, L1, L2), y2_f(theta1, theta2, L1, L2))
+
+x1, y1, x2, y2, = getx1y1x2y2(t, theta1, theta2, L1, L2)
+
+i = 0
+while t[i] <= 39.9:
+    vpython.rate(25)
+    mass1.pos= vpython.vector(x1[i], y1[i], 0)
+    mass2.pos = vpython.vector(x2[i], y2[i], 0)
+    rod1.axis = vpython.vector(x1[i], y1[i], 0)
+    rod2.pos = vpython.vector(x1[i], y1[i], 0)
+    rod2.axis = vpython.vector(x2[i]-x1[i], y2[i]-y1[i], 0)
+    i += 1
+
+
+
 
 
 
