@@ -1,8 +1,14 @@
 import sympy as smp
 from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
+import scipy.linalg as la
 import numpy as np
 import matplotlib.pyplot as plt
-import vpython
+from timeit import default_timer as timer
+
+import Animation
+import Lyapunov
+
 
 #non-dynamic variables
 t, g = smp.symbols('t, g')
@@ -51,6 +57,16 @@ LE2 = smp.diff(L, theta2) - smp.diff(smp.diff(L, the2_d), t).simplify()
 
 #Solving equations of motion with respect to the1_dd and the2_dd
 sols = smp.solve([LE1, LE2], (the1_dd, the2_dd), simplify = False, rational = False)
+z1_d,z2_d  = sols[the1_dd].simplify(), sols[the2_dd].simplify()
+
+x = smp.Matrix([[theta1], [the1_d], [theta2], [the2_d]])
+f = smp.Matrix([[the1_d], [z1_d], [the2_d], [z2_d]])
+#print(f)
+jacobian = f.jacobian(x)
+
+print(jacobian)
+    
+jacobian_f = smp.lambdify((t, g, m1, m2, L1, L2, theta1, the1_d, theta2, the2_d), jacobian)
 
 #Re-parameterizing second order ODE in terms of z = dtheta/dt and turning it into numerical system
 dz1dt_f = smp.lambdify((t, g, m1, m2, L1, L2, theta1, theta2, the1_d, the2_d), sols[the1_dd])
@@ -60,7 +76,7 @@ dthe2dt_f = smp.lambdify(the2_d, the2_d)
 
 #Defining function based off the vector S and time t
 #Note the use of S
-def dSdt(S, t, g, m1, m2, L1, L2):
+def dSdt(t, S, g, m1, m2, L1, L2):
     theta1, z1, theta2, z2 = S          #Note variables are unpacked from the S list
     return [dthe1dt_f(z1), dz1dt_f(t, g, m1, m2, L1, L2, theta1, theta2, z1, z2), dthe2dt_f(z2), dz2dt_f(t, g, m1, m2, L1, L2, theta1, theta2, z1, z2)]
 
@@ -69,46 +85,21 @@ t = np.linspace(0, 40, 1001)
 g, m1, m2, L1, L2 = 9.81, 1, 1, 2, 2
 
 
+#print(lin @ np.identity(4))
+#q, r = np.linalg.qr(lin)
+S0 = [np.pi/2, 0, np.pi, 0]
+
 #numerically solving system and putting setting ans to list of points
 #note the use of the dSdt function as a parameter, the y0 argument is passed as the first S argument into dSdt
-ans = odeint(dSdt, y0 = [1, -3, -1, 5], t = t, args = (g, m1, m2, L1, L2))
+ans = solve_ivp(dSdt, t_span = [0, 40], y0 = S0, t_eval = t, args = (g, m1, m2, L1, L2)).y
+theta1 = ans[0]
+theta2 = ans[2]
 
-#obtain the values for theta1(t) and theta2(t)
-theta1 = ans.T[0]
-theta2 = ans.T[2]
-
-
-mass1 = vpython.sphere(color = vpython.color.red, radius = 0.3, make_trail = True)
-mass2 = vpython.sphere(color = vpython.color.green, radius = 0.3, make_trail = True)
-
-rod1 = vpython.cylinder(pos = vpython.vector(0,0,0), axis = vpython.vector(0,0,0), radius = 0.05)
-rod2 = vpython.cylinder(pos = vpython.vector(0,0,0), axis = vpython.vector(0,0,0), radius = 0.05)
-
+lyap = Lyapunov.getLyap(dSdt, jacobian_f, t, S0, (g, m1, m2, L1, L2))
 
 def getx1y1x2y2(t, theta1, theta2, L1, L2):
     return (x1_f(theta1, L1), y1_f(theta1, L1), x2_f(theta1, theta2, L1, L2), y2_f(theta1, theta2, L1, L2))
 
 x1, y1, x2, y2, = getx1y1x2y2(t, theta1, theta2, L1, L2)
 
-i = 0
-while t[i] <= 39.9:
-    vpython.rate(25)
-    mass1.pos= vpython.vector(x1[i], y1[i], 0)
-    mass2.pos = vpython.vector(x2[i], y2[i], 0)
-    rod1.axis = vpython.vector(x1[i], y1[i], 0)
-    rod2.pos = vpython.vector(x1[i], y1[i], 0)
-    rod2.axis = vpython.vector(x2[i]-x1[i], y2[i]-y1[i], 0)
-    i += 1
-
-
-
-
-
-
-
- 
-
-
-
-
-
+Animation.animate(t, x1, y1, x2, y2)

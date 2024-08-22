@@ -1,12 +1,12 @@
 import vpython
 
-mass1 = vpython.sphere(color = vpython.color.red, radius = 0.3, make_trail = True)
-mass2 = vpython.sphere(color = vpython.color.green, radius = 0.3, make_trail = True)
-
-rod1 = vpython.cylinder(pos = vpython.vector(0,0,0), axis = vpython.vector(0,0,0), radius = 0.05)
-rod2 = vpython.cylinder(pos = vpython.vector(0,0,0), axis = vpython.vector(0,0,0), radius = 0.05)
-
 def animate(t, x1, y1, x2, y2):
+    mass1 = vpython.sphere(color = vpython.color.red, radius = 0.3, make_trail = False)
+    mass2 = vpython.sphere(color = vpython.color.green, radius = 0.3, make_trail = True)
+
+    rod1 = vpython.cylinder(pos = vpython.vector(0,0,0), axis = vpython.vector(0,0,0), radius = 0.05)
+    rod2 = vpython.cylinder(pos = vpython.vector(0,0,0), axis = vpython.vector(0,0,0), radius = 0.05)
+
     i = 0
     while t[i] <= 39.9:
         vpython.rate(25)
