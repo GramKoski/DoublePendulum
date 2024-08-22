@@ -1,1 +1,1 @@
-Finding periodic orbits of double pendulum by tracking lyapunov expoenent of system with different initial conditions.
+Finding periodic orbits of double pendulum by tracking lyapunov exponent of system with different initial conditions.
